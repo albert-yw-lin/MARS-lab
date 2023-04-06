@@ -96,16 +96,15 @@ classdef Robot
            J_analytical_upper = jacobian(upper_linkage_state, [motor_upper_l; motor_upper_r]);
            J_analytical_lower = jacobian(lower_linkage_state, [motor_lower_l; motor_lower_r]);
 
-           % the numerical solution of jacobian
-           J_numerical_upper = subs(J_analytical_upper, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
-           J_numerical_lower = subs(J_analytical_lower, [motor_lower_l motor_lower_r], [motors_state(3) motors_state(4)]);
-
            % if there is no input, then the output will be analytical solution
            % if the input is motors state, the output will be numerical solution
            if (nargin == 0)
-                 J = [J_analytical_upper J_analytical_lower];
+               J = [J_analytical_upper J_analytical_lower];   
            else
-                 J = [J_numerical_upper J_numerical_lower];
+               % the numerical solution of jacobian
+               J_numerical_upper = subs(J_analytical_upper, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
+               J_numerical_lower = subs(J_analytical_lower, [motor_lower_l motor_lower_r], [motors_state(3) motors_state(4)]);
+               J = [J_numerical_upper J_numerical_lower];
            end  
         end
 
