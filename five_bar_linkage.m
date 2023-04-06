@@ -50,8 +50,8 @@ classdef five_bar_linkage
            rad_front_l = atan2(unit_vector_front_l(1), unit_vector_front_l(0));
 
            % position of the extended front left arm
-           x_extended = obj.FRONT_L_EXTENDED*unit_vector_front_l(0);
-           y_extended = obj.FRONT_L_EXTENDED*unit_vector_front_l(1);
+           x_extended = x_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(0);
+           y_extended = y_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(1);
 
            % add the XY offset when in the robot system
            x_extended = x_extended + obj.X_OFFSET;
