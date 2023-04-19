@@ -57,9 +57,5 @@ classdef five_bar_linkage
            x_extended = x_extended + obj.X_OFFSET;
            y_extended = y_extended + obj.Y_OFFSET;
        end
-
-       function [] = fk_jacobian()
-           %%% TODO %%%
-       end
    end
 end
