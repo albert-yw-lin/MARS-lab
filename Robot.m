@@ -23,13 +23,16 @@ classdef Robot
            obj.LENGTH_BALL_JOINT = BALL_JOINT_OFFSET(2);
        end
 
-       function [upper_linkage_state, lower_linkage_state, rad_ball_joint] = fk_linkages(motors_state)
+       function [upper_linkage_state, lower_linkage_state, rad_ball_joint, point_back_l, point_back_r, point_intersect] = fk_linkages(obj, motors_state)
            % motor_*: [motor_upper_l, motor_upper_r, motor_lower_l, motor_lower_r] (rad)
            % *_linkage_state: [x, y, angle(rad)] of extended arm
            
-           [x_extended_upper, y_extended_upper, ~] = obj.upper_linkage.fk(motors_state(1), motors_state(2));
-           [x_extended_lower, y_extended_lower, rad_front_l_lower] = obj.lower_linkage.fk(motors_state(3), motors_state(4));
-
+           [x_extended_upper, y_extended_upper, ~, point_back_l_upper, point_back_r_upper, point_intersect_upper] = obj.upper_linkage.fk(motors_state(1), motors_state(2));
+           [x_extended_lower, y_extended_lower, rad_front_l_lower, point_back_l_lower, point_back_r_lower, point_intersect_lower] = obj.lower_linkage.fk(motors_state(3), motors_state(4));
+           point_back_l = [point_back_l_upper; point_back_l_lower];
+           point_back_r = [point_back_r_upper; point_back_r_lower];
+           point_intersect = [point_intersect_upper; point_intersect_lower];
+           
            % ball_joint_angle & lower linkage state
            rad_ball_joint = rad_front_l_lower + (pi - obj.RAD_BALL_JOINT);
            x_lower = x_extended_lower + obj.LENGTH_BALL_JOINT * cos(rad_ball_joint);
@@ -126,31 +129,31 @@ classdef Robot
                J = [J_analytical_upper J_analytical_lower];
            else
                % the numerical solution of jacobian
-               J_numerical_upper = subs(J_analytical_upper, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
+               J_numerical_upper = subs(J_analytical_upper, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], [motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
                J_numerical_lower = subs(J_analytical_lower, [motor_lower_l motor_lower_r], [motors_state(3) motors_state(4)]);
                J = [J_numerical_upper J_numerical_lower];
-               J_cart = subs(J_cart, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
+               J_cart = subs(J_cart, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], [motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
            end  
        end
        
-       function transformation_matrix = DH2trans(DH_parameters)
+       function transformation_matrix = DH2trans(obj, DH_parameters)
             % DH_parameters: [alpha, theta, a, d] (mm)
             alpha = DH_parameters(1); theta = DH_parameters(2); a = DH_parameters(3); d = DH_parameters(4);
-            transformation_matrix = [cos(theta) -sin(theta) 0 alpha;
+            transformation_matrix = [cos(theta) -sin(theta) 0 a;
                                      sin(theta)*cos(alpha) cos(theta)*cos(alpha) -sin(alpha) -sin(alpha)*d;
                                      sin(theta)*sin(alpha) cos(theta)*sin(alpha) cos(alpha) cos(alpha)*d;
                                      0 0 0 1];
        end
         
-        function [cart_position, cart_configuration] = fk_cart(five_bar_linkage_state)
-            % five_bar_linkage_state: [upper_linkage_state, lower_linkage_state]
+        function [cart_position, cart_configuration] = fk_cart(obj, five_bar_linkage_state)
+            % five_bar_linkage_state: [upper_linkage_state; lower_linkage_state]
             % cart_positoin: [x_cart, y_cart]
             % cart_configuration: [theta_xz, theta_yz] (in radian)
             % cart_position: [x_cart, y_cart, z_cart]
             upper_linkage_state = five_bar_linkage_state(1, :);
             lower_linkage_state = five_bar_linkage_state(2, :);
-            upper_point = [upper_linkage_state(1), upper_linkage_state(2), UPPER_LINKAGE_LOCATION(3), 1];
-            lower_point = [lower_linkage_state(1), lower_linkage_state(2), LOWER_LINKAGE_LOCATION(3), 1];
+            upper_point = [upper_linkage_state(1); upper_linkage_state(2); Const.UPPER_LINKAGE_LOCATION(3); 1];
+            lower_point = [lower_linkage_state(1); lower_linkage_state(2); Const.LOWER_LINKAGE_LOCATION(3); 1];
 
             % determine theta_yz and theta_xz
             vector_cart_direction = upper_point - lower_point;
@@ -158,20 +161,21 @@ classdef Robot
             theta_xz = atan2(vector_cart_direction(1), vector_cart_direction(3)); % in radian
 
             % determine location of the cart
-            DH_universal_to_ball_joint = [-0.5*pi theta_xz lower_point(1) lower_point(2)];
-            DH_ball_joint_to_cart = [-0.5*pi theta_yz 0 LENGTH_BALL_JOINT_TO_CART];
+            DH_universal_to_ball_joint = [-0.5*pi theta_xz+0.5*pi lower_point(1) lower_point(2)];
+            DH_ball_joint_to_cart = [-0.5*pi theta_yz 0 Const.LENGTH_BALL_JOINT_TO_CART];
+            DH_cart_offset = [0, -0.5*pi, Const.LENGTH_CART_OFFSET, 0];
 
-            trans_matrix_universal_to_ball_joint = DH2trans(DH_universal_to_ball_joint);
-            trans_matrix_ball_joint_to_cart = DH2trans(DH_ball_joint_to_cart);
-            trans_cart_offset = DH2trans(0, -0.5*pi, LENGTH_CART_OFFSET, 0);
+            trans_matrix_universal_to_ball_joint = obj.DH2trans(DH_universal_to_ball_joint);
+            trans_matrix_ball_joint_to_cart = obj.DH2trans(DH_ball_joint_to_cart);
+            trans_cart_offset = obj.DH2trans(DH_cart_offset);
 
             cart_position = trans_cart_offset * trans_matrix_ball_joint_to_cart * trans_matrix_universal_to_ball_joint * lower_point;
-            cart_position = cart_position(1:2, 1);
+            cart_position = cart_position(1:3, 1).';
             cart_configuration = [theta_xz, theta_yz];
         end
         
-        function [tool_position] = fk_tool(cart_position, cart_configuration, zt)
-            % cart_state: [x_cart, y_cart];
+        function [tool_position] = fk_tool(obj, cart_position, cart_configuration, zt)
+            % cart_position: [x_cart, y_cart];
             % cart_configuration: [theta_xz, theta_yz];
             % zt: height of the desired tool tip. When the tool tip intersects with the plane the lower scara lies on, zt = 0. 
             % tool_position: [xt, yt, zt]

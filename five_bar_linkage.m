@@ -24,7 +24,7 @@ classdef five_bar_linkage
            obj.Y_OFFSET = LINKAGE_LOCATION(2);
        end
 
-       function [x_extended, y_extended, rad_front_l] = fk(rad_back_l, rad_back_r)
+       function [x_extended, y_extended, rad_front_l, point_back_l, point_back_r, point_intersect] = fk(obj, rad_back_l, rad_back_r)
            % based on "5-Bar Linkage Kinematic Solver and Simulator"
 
            % coordinates of back arms
@@ -32,6 +32,8 @@ classdef five_bar_linkage
            y_back_l = obj.BACK_L*sin(rad_back_l); % (=yr1)
            x_back_r = obj.BACK_R*cos(rad_back_r) + obj.GROUND; % (=xr2)
            y_back_r = obj.BACK_R*sin(rad_back_r); % (=yr2)
+           point_back_l = [x_back_l + obj.X_OFFSET, y_back_l + obj.Y_OFFSET];
+           point_back_r = [x_back_r + obj.X_OFFSET, y_back_r + obj.Y_OFFSET];
 
            % some calculation process based on the paper
            v1 = (y_back_l - y_back_r)/(x_back_r - x_back_l);
@@ -44,14 +46,15 @@ classdef five_bar_linkage
            y_intersect = (-v4 + sqrt(v4^2 - 4*v3*v5))/2*v3; % positive solution
            % y_intersect = (-v4 - sqrt(v4^2 - 4*v3*v5))/2*v3; % negative solution
            x_intersect = v1*y_intersect + v2;
+           point_intersect = [x_intersect + obj.X_OFFSET, y_intersect + obj.Y_OFFSET];
 
            % rad_front_l: orientation of the front left arm
-           unit_vector_front_l = [x_intersect - x_back_l, y_intersect - y_back_l] ./ norm([x_intersect - x_back_l, y_intersect - y_back_l]);
-           rad_front_l = atan2(unit_vector_front_l(1), unit_vector_front_l(0));
+           unit_vector_front_l = (point_intersect - point_back_l) / norm(point_intersect - point_back_l);
+           rad_front_l = atan2(unit_vector_front_l(2), unit_vector_front_l(1));
 
            % position of the extended front left arm
-           x_extended = x_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(0);
-           y_extended = y_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(1);
+           x_extended = x_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(1);
+           y_extended = y_intersect + obj.FRONT_L_EXTENDED*unit_vector_front_l(2);
 
            % add the XY offset when in the robot system
            x_extended = x_extended + obj.X_OFFSET;
