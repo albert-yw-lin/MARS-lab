@@ -13,35 +13,37 @@ motor_lower_l = deg2rad(129.77); %(40, 40)
 motor_lower_r = deg2rad(-30.25);
 
 motors_state = [motor_upper_l motor_upper_r motor_lower_l motor_lower_r];
-[upper_linkage_state, lower_linkage_state, ~, point_back_l, point_back_r, point_intersect] = eyeRobot.fk_linkages(motors_state);
+[upper_linkage_state, lower_linkage_state, ~, point_back_l, point_back_r, point_intersect, point_extended] = eyeRobot.fk_linkages(motors_state);
 five_bar_linkage_state = [upper_linkage_state; lower_linkage_state];
 [cart_position, cart_configuration] = eyeRobot.fk_cart(five_bar_linkage_state);
-zt = 5;
+zt = -10;
 [tool_position] = eyeRobot.fk_tool(cart_position, cart_configuration, zt);
 
 %% plot
 upper_ground_l = Const.UPPER_LINKAGE_LOCATION;
 upper_back_l = [point_back_l(1, 1), point_back_l(1, 2), Const.UPPER_LINKAGE_LOCATION(3)];
 upper_intersect = [point_intersect(1, 1), point_intersect(1, 2), Const.UPPER_LINKAGE_LOCATION(3)];
-upper_extended = [upper_linkage_state(1), upper_linkage_state(2), Const.UPPER_LINKAGE_LOCATION(3)];
+upper_extended = [point_extended(1, 1), point_extended(1, 2), Const.UPPER_LINKAGE_LOCATION(3)];
+upper_ball_joint = [upper_linkage_state(1), upper_linkage_state(2), Const.UPPER_LINKAGE_LOCATION(3)];
 upper_back_r = [point_back_r(1, 1), point_back_r(1, 2), Const.UPPER_LINKAGE_LOCATION(3)];
 upper_ground_r = [Const.UPPER_LINKAGE_LOCATION(1)+Const.LINKAGE_LENGTHS(1), Const.UPPER_LINKAGE_LOCATION(2), Const.UPPER_LINKAGE_LOCATION(3)];
 
 lower_ground_l = Const.LOWER_LINKAGE_LOCATION;
 lower_back_l = [point_back_l(2, 1), point_back_l(2, 2), Const.LOWER_LINKAGE_LOCATION(3)];
 lower_intersect = [point_intersect(2, 1), point_intersect(2, 2), Const.LOWER_LINKAGE_LOCATION(3)];
-lower_extended = [lower_linkage_state(1), lower_linkage_state(2), Const.LOWER_LINKAGE_LOCATION(3)];
+lower_extended = [point_extended(2, 1), point_extended(2, 2), Const.LOWER_LINKAGE_LOCATION(3)];
+lower_ball_joint = [lower_linkage_state(1), lower_linkage_state(2), Const.LOWER_LINKAGE_LOCATION(3)];
 lower_back_r = [point_back_r(2, 1), point_back_r(2, 2), Const.LOWER_LINKAGE_LOCATION(3)];
 lower_ground_r = [Const.LOWER_LINKAGE_LOCATION(1)+Const.LINKAGE_LENGTHS(1), Const.LOWER_LINKAGE_LOCATION(2), Const.LOWER_LINKAGE_LOCATION(3)];
 
-upper_layer_points = [upper_ground_l; upper_back_l; upper_intersect; 
-                      upper_extended; upper_intersect; upper_back_r; upper_ground_r];
-lower_layer_points = [lower_ground_l; lower_back_l; lower_intersect; 
-                      lower_extended; lower_intersect; lower_back_r; lower_ground_r];
+upper_layer_points = [upper_ground_l; upper_back_l; upper_intersect; upper_extended; 
+                      upper_ball_joint; upper_extended; upper_intersect; upper_back_r; upper_ground_r];
+lower_layer_points = [lower_ground_l; lower_back_l; lower_intersect; lower_extended; 
+                      lower_ball_joint; lower_extended; lower_intersect; lower_back_r; lower_ground_r];
 
-cart_points = [upper_extended; lower_extended; cart_position; tool_position];
-
-% cart, tool, cart_plane
+cart_points = [upper_ball_joint; lower_ball_joint; cart_position; tool_position];
+% cart： 綠點，tool: 針尖
+disp(cart_position)
 
 figure
 % upper layer

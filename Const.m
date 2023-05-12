@@ -14,7 +14,7 @@ classdef Const
         BALL_JOINT_OFFSET = [Const.RAD_BALL_JOINT_OFFSET Const.LENGTH_BALL_JOINT_OFFSET]
         
         % distance between ball joint and cart
-        LENGTH_BALL_JOINT_TO_CART = 10;
+        LENGTH_BALL_JOINT_TO_CART = 5;
         
         LENGTH_CART_OFFSET = 10;
     end

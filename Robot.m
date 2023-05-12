@@ -23,7 +23,7 @@ classdef Robot
            obj.LENGTH_BALL_JOINT = BALL_JOINT_OFFSET(2);
        end
 
-       function [upper_linkage_state, lower_linkage_state, rad_ball_joint, point_back_l, point_back_r, point_intersect] = fk_linkages(obj, motors_state)
+       function [upper_linkage_state, lower_linkage_state, rad_ball_joint, point_back_l, point_back_r, point_intersect, point_extended] = fk_linkages(obj, motors_state)
            % motor_*: [motor_upper_l, motor_upper_r, motor_lower_l, motor_lower_r] (rad)
            % *_linkage_state: [x, y, angle(rad)] of extended arm
            
@@ -32,6 +32,7 @@ classdef Robot
            point_back_l = [point_back_l_upper; point_back_l_lower];
            point_back_r = [point_back_r_upper; point_back_r_lower];
            point_intersect = [point_intersect_upper; point_intersect_lower];
+           point_extended = [x_extended_upper, y_extended_upper;x_extended_lower, y_extended_lower];
            
            % ball_joint_angle & lower linkage state
            rad_ball_joint = rad_front_l_lower + (pi - obj.RAD_BALL_JOINT);
@@ -131,7 +132,7 @@ classdef Robot
                % the numerical solution of jacobian
                J_numerical_upper = subs(J_analytical_upper, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], [motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
                J_numerical_lower = subs(J_analytical_lower, [motor_lower_l motor_lower_r], [motors_state(3) motors_state(4)]);
-               J = [J_numerical_upper J_numerical_lower];
+               J = [J_numerical_upper J_numerical_lower];         
                J_cart = subs(J_cart, [motor_lower_l motor_lower_r motor_upper_l motor_upper_r], [motors_state(1) motors_state(2) motors_state(3) motors_state(4)]);
            end  
        end
@@ -139,9 +140,9 @@ classdef Robot
        function transformation_matrix = DH2trans(obj, DH_parameters)
             % DH_parameters: [alpha, theta, a, d] (mm)
             alpha = DH_parameters(1); theta = DH_parameters(2); a = DH_parameters(3); d = DH_parameters(4);
-            transformation_matrix = [cos(theta) -sin(theta) 0 a;
-                                     sin(theta)*cos(alpha) cos(theta)*cos(alpha) -sin(alpha) -sin(alpha)*d;
-                                     sin(theta)*sin(alpha) cos(theta)*sin(alpha) cos(alpha) cos(alpha)*d;
+            transformation_matrix = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha) a*cos(theta);
+                                     sin(theta) cos(theta)*cos(alpha) -cos(theta)*sin(alpha) a*sin(theta);
+                                     0 sin(alpha) cos(alpha) d;
                                      0 0 0 1];
        end
         
@@ -161,15 +162,17 @@ classdef Robot
             theta_xz = atan2(vector_cart_direction(1), vector_cart_direction(3)); % in radian
 
             % determine location of the cart
-            DH_universal_to_ball_joint = [-0.5*pi theta_xz+0.5*pi lower_point(1) lower_point(2)];
-            DH_ball_joint_to_cart = [-0.5*pi theta_yz 0 Const.LENGTH_BALL_JOINT_TO_CART];
-            DH_cart_offset = [0, -0.5*pi, Const.LENGTH_CART_OFFSET, 0];
-
+            DH_temp = [0.5*pi pi lower_point(1) 0];
+            DH_universal_to_ball_joint = [0 0 0 lower_point(2)];
+            DH_ball_joint_to_cart = [0.5*pi -0.5*pi+theta_xz 0 Const.LENGTH_BALL_JOINT_TO_CART];
+            DH_cart_offset = [0 theta_yz 0 Const.LENGTH_CART_OFFSET];
+            
+            trans_matrix_temp = obj.DH2trans(DH_temp);
             trans_matrix_universal_to_ball_joint = obj.DH2trans(DH_universal_to_ball_joint);
             trans_matrix_ball_joint_to_cart = obj.DH2trans(DH_ball_joint_to_cart);
             trans_cart_offset = obj.DH2trans(DH_cart_offset);
 
-            cart_position = trans_cart_offset * trans_matrix_ball_joint_to_cart * trans_matrix_universal_to_ball_joint * lower_point;
+            cart_position = trans_cart_offset * trans_matrix_ball_joint_to_cart * trans_matrix_universal_to_ball_joint * trans_matrix_temp * lower_point;
             cart_position = cart_position(1:3, 1).';
             cart_configuration = [theta_xz, theta_yz];
         end
