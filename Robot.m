@@ -139,11 +139,12 @@ classdef Robot
        
        function transformation_matrix = DH2trans(obj, DH_parameters)
             % DH_parameters: [alpha, theta, a, d] (mm)
-            alpha = DH_parameters(1); theta = DH_parameters(2); a = DH_parameters(3); d = DH_parameters(4);
-            transformation_matrix = [cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha) a*cos(theta);
-                                     sin(theta) cos(theta)*cos(alpha) -cos(theta)*sin(alpha) a*sin(theta);
-                                     0 sin(alpha) cos(alpha) d;
-                                     0 0 0 1];
+            alpha = DH_parameters(1); theta = DH_parameters(2); rx = DH_parameters(3); dz = DH_parameters(4);
+            transformation_matrix =  [ 
+                cos(theta) -sin(theta)*cos(alpha) sin(theta)*sin(alpha) rx*cos(theta);...
+                sin(theta) cos(theta)*cos(alpha) -cos(theta)*sin(alpha) rx*sin(theta);...
+                0 sin(alpha) cos(alpha) dz;...
+                0 0 0 1 ];
        end
         
         function [cart_position, cart_configuration] = fk_cart(obj, five_bar_linkage_state)
@@ -162,10 +163,10 @@ classdef Robot
             theta_xz = atan2(vector_cart_direction(1), vector_cart_direction(3)); % in radian
 
             % determine location of the cart
-            DH_temp = [0.5*pi pi lower_point(1) 0];
-            DH_universal_to_ball_joint = [0 0 0 lower_point(2)];
+            DH_temp = [0.5*pi pi 0 0];
+            DH_universal_to_ball_joint = [0 0 0 0];
             DH_ball_joint_to_cart = [0.5*pi -0.5*pi+theta_xz 0 Const.LENGTH_BALL_JOINT_TO_CART];
-            DH_cart_offset = [0 theta_yz 0 Const.LENGTH_CART_OFFSET];
+            DH_cart_offset = [0 theta_yz 0 0];
             
             trans_matrix_temp = obj.DH2trans(DH_temp);
             trans_matrix_universal_to_ball_joint = obj.DH2trans(DH_universal_to_ball_joint);

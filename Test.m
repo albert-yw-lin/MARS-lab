@@ -7,8 +7,8 @@ lower_linkage = five_bar_linkage(Const.LINKAGE_LENGTHS, Const.LOWER_LINKAGE_LOCA
 eyeRobot.upper_linkage = upper_linkage;
 eyeRobot.lower_linkage = lower_linkage;
 
-motor_upper_l = deg2rad(114.16); %(50, 50)
-motor_upper_r = deg2rad(-19.86);
+motor_upper_l = deg2rad(129.77); %(50, 50)
+motor_upper_r = deg2rad(-30.25);
 motor_lower_l = deg2rad(129.77); %(40, 40)
 motor_lower_r = deg2rad(-30.25);
 

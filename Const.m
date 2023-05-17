@@ -5,7 +5,7 @@ classdef Const
         LINKAGE_LENGTHS = [41 45 45 69 69 15]
 
         % [X, Y, Z]
-        UPPER_LINKAGE_LOCATION = [0 -10 29]
+        UPPER_LINKAGE_LOCATION = [0 0 29]% 0 -10 29%%%%%%%%%%%%%%%%%%%%%%%%
         LOWER_LINKAGE_LOCATION = [0 0 0]
 
         % ball joint offset
