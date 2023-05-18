@@ -165,8 +165,8 @@ classdef Robot
             % determine location of the cart
             DH_temp = [0.5*pi pi 0 0];
             DH_universal_to_ball_joint = [0 0 0 0];
-            DH_ball_joint_to_cart = [0.5*pi -0.5*pi+theta_xz 0 Const.LENGTH_BALL_JOINT_TO_CART];
-            DH_cart_offset = [0 theta_yz 0 0];
+            DH_ball_joint_to_cart = [0.5*pi -0.5*pi+theta_xz 0 Const.LENGTH_BALL_JOINT_TO_R_JOINT];
+            DH_cart_offset = [0 theta_yz 0 Const.LENGTH_R_JOINT_TO_CART];
             
             trans_matrix_temp = obj.DH2trans(DH_temp);
             trans_matrix_universal_to_ball_joint = obj.DH2trans(DH_universal_to_ball_joint);

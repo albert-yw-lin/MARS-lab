@@ -10,12 +10,13 @@ classdef Const
 
         % ball joint offset
         RAD_BALL_JOINT_OFFSET = deg2rad(134.08)
-        LENGTH_BALL_JOINT_OFFSET = 28
+        LENGTH_BALL_JOINT_OFFSET = 12
         BALL_JOINT_OFFSET = [Const.RAD_BALL_JOINT_OFFSET Const.LENGTH_BALL_JOINT_OFFSET]
         
-        % distance between ball joint and cart
-        LENGTH_BALL_JOINT_TO_CART = 5;
+        % distance between ball joint and R-joint
+        LENGTH_BALL_JOINT_TO_R_JOINT = 16;
         
-        LENGTH_CART_OFFSET = 10;
+       % distance between R-joint and the cart
+        LENGTH_R_JOINT_TO_CART = 25.37;
     end
 end
